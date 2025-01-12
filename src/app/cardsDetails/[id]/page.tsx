@@ -1,30 +1,46 @@
 import { client } from "@/sanity/lib/client";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+
+// Define the type for the product object
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  tags: string[]; // assuming tags is an array of strings
+  discountPercentage: number;
+  rating: number;
+  ratingCount: number;
+  quantity: number;
+  price: number;
+  image_url: string;
+}
+
 const CardsDetails = async ({ params }: { params: { id: string } }) => {
-  const { id } = params; 
+  const { id } = params;
+
   // Updated query with additional fields
-  const query = `
-    *[_type=="product" && _id==$id][0]{
-      _id,
-      name,
-      description,
-      tags,
-      discountPercentage,
-      rating,
-      ratingCount,
-      quantity,
-      price,
-      "image_url":image.asset->url
-    }
-  `;
+  const query = `*[_type=="product" && _id==$id][0]{
+    _id,
+    name,
+    description,
+    tags,
+    discountPercentage,
+    rating,
+    ratingCount,
+    quantity,
+    price,
+    "image_url":image.asset->url
+  }`;
+
   try {
     // Fetch product data
-    const product = await client.fetch(query, { id });
+    const product: Product | null = await client.fetch(query, { id });
 
     if (!product) {
       return notFound(); // Return 404 if product is not found
     }
+
     return (
       <div className="max-w-3xl mx-auto p-8 bg-slate-100 rounded-lg shadow-lg">
         <Image
@@ -42,7 +58,9 @@ const CardsDetails = async ({ params }: { params: { id: string } }) => {
         <p className="text-lg text-gray-800 mt-2">Quantity: {product.quantity}</p>
         <p className="text-lg text-gray-800 mt-2">Tags: {product.tags?.join(", ")}</p> {/* Display tags if available */}
         <p className="text-lg text-gray-800 mt-2">Discount: {product.discountPercentage}%</p> {/* Display discount if available */}
-        <p className="text-lg text-gray-800 mt-2">Rating: {product.rating} ({product.ratingCount} reviews)</p> {/* Display rating and rating count */}
+        <p className="text-lg text-gray-800 mt-2">
+          Rating: {product.rating} ({product.ratingCount} reviews)
+        </p> {/* Display rating and rating count */}
       </div>
     );
   } catch (error) {
@@ -50,4 +68,5 @@ const CardsDetails = async ({ params }: { params: { id: string } }) => {
     return notFound(); // Return 404 if there's an error
   }
 };
+
 export default CardsDetails;
